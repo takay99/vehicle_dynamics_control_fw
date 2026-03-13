@@ -19,7 +19,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME g4_i2c_test)
+set(CMAKE_PROJECT_NAME vehicle_dynamics_control_fw)
 
 
 # Enable compile command to ease indexing with e.g. clangd
@@ -47,8 +47,6 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Core/Src/main_thread.cpp
-    Core/Src/bno055.c
-    Core/Src/bno055_stm32.c
 )
 
 # Add include paths

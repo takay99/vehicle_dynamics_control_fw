@@ -82,44 +82,33 @@ extern "C" void main_thread(void *) {
   // Quaternion quat_28, quat_29;
   // AngularVelocity ang_vel_28, ang_vel_29;
   // Acceleration acc_28, acc_29;
-  struct ThreadArgs {
-    Bno055_double *bno055_t;
-    Bno055Data *bno055_data;
-  };
+
   // スレッドの外で定義
   Bno055_double bno055_instance(&hi2c1); // 適切な引数で初期化
   Bno055Data bno055_data_instance;
-
-  // データをまとめる
-  ThreadArgs args = {&bno055_instance, &bno055_data_instance};
 
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);
   HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
   HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2);
 
-  while (!args.bno055_t->start(1000)) {
+  while (!bno055_instance.start(1000)) {
     printf("Failed to initialize BNO055. Retrying...\n");
-    osDelay(100);
+    halx::core::delay(100);
   }
 
   ////////////////
   Thread bno055_thread(
-      [](void *arg) {
-        // 引数をキャスト
-        auto thread_args = static_cast<ThreadArgs *>(arg);
-
+      [&bno055_instance, &bno055_data_instance]() {
         while (true) {
-          // 構造体のメンバーを通じてデータにアクセス
-          thread_args->bno055_t->get_bno(*(thread_args->bno055_data));
-          osDelay(10);
+          bno055_instance.get_bno(bno055_data_instance);
+          halx::core::delay(10);
         }
       },
-      &args, // 新しく作った構造体のアドレスを渡す
       4096, osPriorityNormal);
   // ///////////
   while (true) {
-    uint32_t start = osKernelGetTickCount();
+    uint32_t start = halx::core::get_tick();
 
     a1 = __HAL_TIM_GET_COMPARE(&htim3, TIM_CHANNEL_1);
     a2 = __HAL_TIM_GET_COMPARE(&htim3, TIM_CHANNEL_2);
@@ -136,17 +125,17 @@ extern "C" void main_thread(void *) {
     float motor_vel_2 = c610_2.get_rpm() / 60.0f;
 
     motor_acc_1 = (motor_vel_1 * 0.0410311 - prevous_motor_rps_1) * 1000 /
-                  (osKernelGetTickCount() - prevous_time);
+                  (halx::core::get_tick() - prevous_time);
     // 回転数×車輛速度のための係数×ミリ秒
     motor_acc_2 = (motor_vel_2 * 0.0410311 - prevous_motor_rps_2) * 1000 /
-                  (osKernelGetTickCount() - prevous_time);
+                  (halx::core::get_tick() - prevous_time);
 
     // float filtered_motor_acc_1 =
-    //     lowpass_filter_1.lowpass(motor_acc_1, osKernelGetTickCount());
+    //     lowpass_filter_1.lowpass(motor_acc_1, halx::core::get_tick());
     // float filtered_motor_acc_2 =
-    //     lowpass_filter_2.lowpass(motor_acc_2, osKernelGetTickCount());
+    //     lowpass_filter_2.lowpass(motor_acc_2, halx::core::get_tick());
 
-    prevous_time = osKernelGetTickCount();
+    prevous_time = halx::core::get_tick();
 
     prevous_motor_rps_1 = motor_vel_1 * 0.0410311;
     prevous_motor_rps_2 = motor_vel_2 * 0.0410311;
@@ -163,13 +152,13 @@ extern "C" void main_thread(void *) {
 
     // ログ出力
     LoggerCsvRow row;
-    row.tick = osKernelGetTickCount();
-    row.get_acc_x_28 = args.bno055_data->acc_28.x;
-    row.get_acc_y_28 = args.bno055_data->acc_28.y;
-    row.get_gyr_z_28 = args.bno055_data->ang_vel_28.z;
-    row.get_acc_x_29 = args.bno055_data->acc_29.x;
-    row.get_acc_y_29 = args.bno055_data->acc_29.y;
-    row.get_gyr_z_29 = args.bno055_data->ang_vel_29.z;
+    row.tick = halx::core::get_tick();
+    row.get_acc_x_28 = bno055_data_instance.acc_28.x;
+    row.get_acc_y_28 = bno055_data_instance.acc_28.y;
+    row.get_gyr_z_28 = bno055_data_instance.ang_vel_28.z;
+    row.get_acc_x_29 = bno055_data_instance.acc_29.x;
+    row.get_acc_y_29 = bno055_data_instance.acc_29.y;
+    row.get_gyr_z_29 = bno055_data_instance.ang_vel_29.z;
     row.get_motor_acc_1 = motor_acc_1;
     row.get_motor_acc_2 = motor_acc_2;
     row.get_prevous_motor_rps_1 = prevous_motor_rps_1;
@@ -179,6 +168,6 @@ extern "C" void main_thread(void *) {
     row.get_motor_set_current_2 = motor_set_current_2;
 
     printf("%s\n", row.format());
-    osDelayUntil(start + 10);
+    halx::core::delay_until(start + 10);
   }
 }
