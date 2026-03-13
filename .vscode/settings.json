@@ -1,0 +1,16 @@
+{
+    "cmake.cmakePath": "cube-cmake",
+    "cmake.configureArgs": [
+        "-DCMAKE_COMMAND=cube-cmake"
+    ],
+    "cmake.preferredGenerators": [
+        "Ninja"
+    ],
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.associations": {
+        "compare": "cpp",
+        "cstdint": "cpp",
+        "array": "cpp",
+        "utility": "cpp"
+    }
+}
