@@ -105,7 +105,7 @@ extern "C" void main_thread(void *) {
           halx::core::delay(10);
         }
       },
-      4096, osPriorityNormal);
+      2048, osPriorityNormal);
   // ///////////
   while (true) {
     uint32_t start = halx::core::get_tick();
