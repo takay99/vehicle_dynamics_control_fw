@@ -18,6 +18,8 @@ extern I2C_HandleTypeDef hi2c1;
 
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim2;
+
+static uint8_t uart2_tx_buf[256];
 ///////////////
 
 ///////
@@ -26,8 +28,19 @@ extern "C" void main_thread(void *) {
   using namespace halx::rtos;
   using namespace halx::driver;
 
-  Uart<&huart2> uart2; // デバッグ出力用
+  Uart<&huart2, UartTxDma, UartRxIt> uart2(uart2_tx_buf); // デバッグ出力用
   enable_stdout(uart2);
+
+  Queue<LoggerCsvRow> logger_queue(3);
+  Thread logger_thread(
+      [&logger_queue]() {
+        while (true) {
+          if (auto row = logger_queue.pop(halx::core::MAX_DELAY)) {
+            printf("%s\n", row->format());
+          }
+        }
+      },
+      2048, osPriorityLow);
 
   // I2C i2c_28(&hi2c1, 0x29); // BNO055のI2Cアドレスは0x28
   // I2C i2c_29(&hi2c1, 0x28); // BNO055のI2Cアドレスは0x28
@@ -107,6 +120,7 @@ extern "C" void main_thread(void *) {
       },
       2048, osPriorityNormal);
   // ///////////
+  int logger_count = 0;
   while (true) {
     uint32_t start = halx::core::get_tick();
 
@@ -167,7 +181,10 @@ extern "C" void main_thread(void *) {
     row.get_motor_set_current_1 = motor_set_current_1;
     row.get_motor_set_current_2 = motor_set_current_2;
 
-    printf("%s\n", row.format());
+    if (logger_count % 2 == 0) {
+      logger_queue.push(row);
+    }
+    logger_count++;
     halx::core::delay_until(start + 10);
   }
 }
