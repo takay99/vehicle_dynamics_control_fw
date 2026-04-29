@@ -82,7 +82,6 @@ extern "C" void main_thread(void *) {
 
   float steer_angle;
   float desire_yaw;
-  std::vector<float> csvrow;
 
   float motor_set_current_1;
   float motor_set_current_2;
