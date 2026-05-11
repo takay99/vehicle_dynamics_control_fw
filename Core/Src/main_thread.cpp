@@ -18,11 +18,10 @@ extern I2C_HandleTypeDef hi2c1;
 
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim2;
-
 static uint8_t uart2_tx_buf[256];
-///////////////
+////////////////////////////////////////////
 
-///////
+////////////////////////////////////////////
 extern "C" void main_thread(void *) {
   using namespace halx::peripheral;
   using namespace halx::rtos;
